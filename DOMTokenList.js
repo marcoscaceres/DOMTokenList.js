@@ -1,5 +1,5 @@
 "use strict";
-if (!window.DOMTokenList2) {
+if (!window.DOMTokenList) {
 	//create DOMTokenList implementation 
 	(function createDOMTokenList(window) {
 		var DOMTokenListproto = function DOMTokenList() {
@@ -183,7 +183,7 @@ if (!window.DOMTokenList2) {
 			}
 		};
 		//add to Element
-		Object.defineProperty(window.Element.prototype, "classList2", prop);
+		Object.defineProperty(window.Element.prototype, "classList", prop);
 		Object.defineProperty(window, "DOMTokenList2", {
 			value: DOMTokenListproto
 		})
@@ -279,155 +279,3 @@ if (!window.DOMTokenList2) {
 		}
 	})(this);
 }
-
-window.addEventListener("load", function setUp() {
-	//article elements
-	var articles = document.querySelectorAll("article");
-	//diary entries
-	var entries = [];
-	//the main h1  
-	var h1 = document.querySelector("body > h1");
-
-	//Control showing/hidding all entries
-	var controller = new DiaryController(entries, h1);
-
-	//Create the diary entry objects 
-	for (var i = 0; i < articles.length; i++) {
-		var article = articles[i];
-		var entry = new DiaryEntry(article);
-		entries.push(entry);
-	}
-
-	//using eventing, link the diary entries together so 
-	//that opening one closes the others. 
-	for (var i = 0; i < entries.length; i++) {
-		var target = entries[i];
-		for (var j = 0; j < entries.length; j++) {
-			var listener = entries[j];
-			if (target !== listener) {
-				target.on("show", listener.hide);
-			}
-		}
-	}
-
-	/*
-DiaryController Class
-Controls showing and hidding of all entries
-*/
-	function DiaryController(diaryEntries, elem) {
-		var state = "hidden";
-		elem.addEventListener("click", toggleAll, false);
-
-		function toggleAll() {
-			if (areAnyActive() === false && state === "hidden") {
-				showAll();
-				state = "showing";
-				return;
-			}
-			if (areAnyActive() === true) {
-				hideAll();
-			}
-			state = "hidden";
-		}
-
-		function areAnyActive() {
-			for (var i = 0; i < diaryEntries.length; i++) {
-				var entry = diaryEntries[i];
-				if (entry.isActive) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		function showAll() {
-			for (var i = 0; i < diaryEntries.length; i++) {
-				var entry = diaryEntries[i];
-				entry.show(true);
-			}
-		}
-
-		function hideAll() {
-			for (var i = 0; i < diaryEntries.length; i++) {
-				var entry = diaryEntries[i];
-				entry.hide();
-			}
-		}
-	}
-
-
-	function DiaryEntry(entry) {
-		var para = entry.querySelector("p");
-		var head = entry.querySelector("h2");
-		var listeners = {
-			"show": [],
-			"hide": []
-		}
-		Object.defineProperty(this, "isActive", {
-			get: isActive
-		});
-		this.show = show;
-		this.hide = hide;
-		window.addEventListener("resize", resize, false);
-
-		this.on = function (event, listener) {
-			switch (event) {
-			case "show":
-				{
-					listeners.show.push(listener);
-					break;
-				}
-			case "hide":
-				{
-					listeners.hide.push(listener);
-					break;
-				}
-			}
-		}
-
-		//set up listener
-		head.addEventListener("click", toggle, false)
-
-		function isActive() {
-			return para.classList2.contains("active");
-		}
-
-
-		function toggle() {
-			if (para.classList2.contains("active")) {
-				return hide();
-			}
-			show();
-		}
-
-		function hide() {
-			para.classList2.remove("active");
-			para.style.height = "0";
-			for (var i = 0; i < listeners.hide.length; i++) {
-				listeners.hide[i]();
-			}
-		}
-
-		/*
-	  @force force show, don't notify listeners
-	   */
-		function show(force) {
-			para.classList2.add("active");
-			resize();
-			//lets listeners know
-			if (!force) {
-				for (var i = 0; i < listeners.show.length; i++) {
-					listeners.show[i]();
-				}
-			}
-		}
-
-		function resize(e) {
-			if (isActive()) {
-				para.style.height = "0";
-				para.style.height = para.scrollHeight + "px";
-			}
-
-		}
-	}
-}, false)
